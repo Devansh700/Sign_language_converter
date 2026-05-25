@@ -1,0 +1,9 @@
+opencv-python
+numpy
+tensorflow
+pyttsx3
+keras
+gTTS
+deep-translator
+pygame
+kagglehub
