@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Real-time Sign Language to Hindi Speech & Text Converter using AI and Deep Learning">
+    <title>Sign Language Converter - ASL to Hindi</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ======== AUTH OVERLAY ======== -->
+<div id="auth-overlay" class="auth-overlay">
+    <div class="auth-container">
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form">
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join us to translate sign language</p>
+            
+            <div class="input-group">
+                <label for="reg-username">Username</label>
+                <input type="text" id="reg-username" class="auth-input" required autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label for="reg-password">Password</label>
+                <input type="password" id="reg-password" class="auth-input" required>
+            </div>
+            
+            <div id="reg-error" class="auth-error"></div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+                Register <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <div class="auth-switch">
+                Already have an account? <a id="go-to-login">Log In</a>
+            </div>
+        </form>
+
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form hidden">
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-subtitle">Log in to continue translating</p>
+            
+            <div class="input-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" class="auth-input" required autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" class="auth-input" required>
+            </div>
+            
+            <div id="login-error" class="auth-error"></div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">
+                Log In <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <div class="auth-switch">
+                Don't have an account? <a id="go-to-register">Register</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="app-wrapper">
+
+    <!-- ======== HEADER ======== -->
+    <header class="header" id="app-header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <i class="fa-solid fa-hand"></i>
+            </div>
+            <div class="logo-text">
+                <h1>Sign Language Converter</h1>
+                <p>Real-time Sign Language to Speech &amp; Text</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="lang-selector">
+                <label><i class="fa-solid fa-globe"></i> Language</label>
+                <select id="target-language">
+                    <option value="hi" selected>Hindi (हिन्दी)</option>
+                    <option value="en">English</option>
+                    <option value="mr">Marathi (मराठी)</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="te">Telugu (తెలుగు)</option>
+                    <option value="bn">Bengali (বাংলা)</option>
+                </select>
+            </div>
+            <div class="theme-toggle">
+                <span>Theme</span>
+                <span><i class="fa-solid fa-moon"></i></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ======== SIDEBAR ======== -->
+    <nav class="sidebar" id="app-sidebar">
+        <a class="nav-item active" data-page="home" id="nav-home">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a class="nav-item" data-page="converter" id="nav-converter">
+            <i class="fa-solid fa-video"></i>
+            <span>Live Converter</span>
+        </a>
+        <a class="nav-item" data-page="history" id="nav-history">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>History</span>
+        </a>
+        <a class="nav-item" data-page="settings" id="nav-settings">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </a>
+        <a class="nav-item" data-page="about" id="nav-about">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>About</span>
+        </a>
+        <div class="sidebar-art">
+            🤟<br>🤲
+        </div>
+    </nav>
+
+    <!-- ======== MAIN CONTENT ======== -->
+    <main class="main-content" id="main-content">
+
+        <!-- CAMERA FEED -->
+        <div class="card camera-card" id="camera-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-camera"></i>
+                    Live Camera Feed
+                </div>
+            </div>
+            <div class="camera-container" id="camera-container">
+                <video id="webcam-video" autoplay muted playsinline></video>
+                <canvas id="roi-canvas"></canvas>
+                <div class="live-badge" id="live-badge" style="display: none;">
+                    <div class="live-dot"></div>
+                    Live
+                </div>
+                <div class="loading-overlay" id="camera-loading">
+                    <div class="spinner"></div>
+                    <p>Starting camera...</p>
+                </div>
+            </div>
+            <div class="camera-status">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Camera off</span>
+            </div>
+        </div>
+
+        <!-- DETECTED TEXT -->
+        <div class="card detected-card" id="detected-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-font"></i>
+                    Detected Text
+                </div>
+            </div>
+            <div class="detected-text-display">
+                <span class="detected-text" id="detected-text"></span>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="btn-speak-en" title="Speak English">
+                    <i class="fa-solid fa-volume-high"></i> Speak
+                </button>
+                <button class="btn btn-outline" id="btn-clear" title="Clear Text">
+                    <i class="fa-solid fa-trash-can"></i> Clear
+                </button>
+                <button class="btn btn-outline btn-icon" id="btn-copy-en" title="Copy">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+
+            <!-- Translated -->
+            <div class="translated-section">
+                <div class="translated-label">
+                    <i class="fa-solid fa-language"></i>
+                    Translated (<span id="lang-label">Hindi</span>)
+                </div>
+                <div class="translated-text-display">
+                    <span class="translated-text" id="translated-text"></span>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="btn-speak-hi" title="Speak Hindi">
+                        <i class="fa-solid fa-volume-high"></i> Speak (<span class="speak-lang-label">Hindi</span>)
+                    </button>
+                    <button class="btn btn-outline btn-icon" id="btn-copy-hi" title="Copy Translation">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <button class="btn btn-outline btn-icon" id="btn-share" title="Share">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM ROW -->
+        <div class="bottom-row">
+
+            <!-- Sentence Mode -->
+            <div class="card mode-card">
+                <div class="mode-info">
+                    <div class="mode-icon">
+                        <i class="fa-solid fa-message"></i>
+                    </div>
+                    <div class="mode-text">
+                        <h4>Sentence Mode</h4>
+                        <p>Automatically forms words and sentences</p>
+                    </div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sentence-mode-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Confidence -->
+            <div class="card confidence-card">
+                <div class="confidence-ring">
+                    <svg viewBox="0 0 90 90">
+                        <circle class="ring-bg" cx="45" cy="45" r="39"/>
+                        <circle class="ring-fill" id="conf-ring" cx="45" cy="45" r="39"/>
+                    </svg>
+                    <div class="confidence-value" id="conf-value">0%</div>
+                </div>
+                <div class="confidence-info">
+                    <h4 id="conf-label">No Data</h4>
+                    <p>Gesture recognition accuracy</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="card controls-card">
+                <div class="card-header" style="margin-bottom:10px;">
+                    <div class="card-title">
+                        <i class="fa-solid fa-sliders"></i>
+                        Controls
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="controls-row">
+                        <button class="btn btn-primary" id="btn-start-cam">
+                            <i class="fa-solid fa-play"></i> Start
+                        </button>
+                        <button class="btn btn-danger" id="btn-stop-cam" style="display:none;" title="Stop Camera">
+                            <i class="fa-solid fa-stop"></i> Stop
+                        </button>
+                        <button class="btn btn-warning" id="btn-pause-cam" style="display:none;">
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                        <button class="btn btn-outline" id="btn-flip-cam" title="Flip Camera">
+                            <i class="fa-solid fa-camera-rotate"></i> Flip
+                        </button>
+                        <button class="btn btn-outline" id="btn-clear-all">
+                            <i class="fa-solid fa-trash-can"></i> Clear All
+                        </button>
+                    </div>
+                    <div class="controls-row">
+                        <button class="btn btn-outline" id="btn-download">
+                            <i class="fa-solid fa-download"></i> Download Text
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- HISTORY PAGE (hidden) -->
+        <div class="history-page" id="history-page">
+            <div class="card" style="grid-column:1/-1;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Detection History
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="btn-clear-history">
+                        <i class="fa-solid fa-trash"></i> Clear History
+                    </button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <div class="empty-state">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <p>No history yet. Start detecting to see results here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABOUT PAGE (hidden) -->
+        <div class="about-page" id="about-page">
+            <div class="card" style="grid-column:1/-1; max-width:700px;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-circle-info"></i>
+                        About This Project
+                    </div>
+                </div>
+                <div style="color:var(--text-secondary);line-height:1.8;font-size:0.9rem;">
+                    <p><strong style="color:var(--text-primary);">Sign Language Converter</strong> is a real-time AI-powered application that detects American Sign Language (ASL) gestures using your webcam, converts them to text, translates them into Hindi (and other Indian languages), and speaks the translated text.</p>
+                    <br>
+                    <p><strong style="color:var(--accent-secondary);">Technology Stack:</strong></p>
+                    <ul style="margin-left:20px;margin-top:8px;">
+                        <li>MobileNetV2 (Deep Learning Model)</li>
+                        <li>TensorFlow / Keras</li>
+                        <li>OpenCV for real-time video processing</li>
+                        <li>Google Translate API for translation</li>
+                        <li>Google Text-to-Speech (gTTS) for Hindi speech</li>
+                        <li>Flask for Web Backend</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
